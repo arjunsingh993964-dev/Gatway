@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI Payment Live Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #6200EE;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            width: 45%;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .status-success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Live UPI Payment Dashboard</h2>
+    
+    <div class="stats">
+        <div class="stat-card">
+            <h3>Total Collection</h3>
+            <p id="totalAmount">₹0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Transactions</h3>
+            <p id="totalCount">0</p>
+        </div>
+    </div>
+
+    <h3>Recent Transactions (Auto-Updating)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Sender Name</th>
+                <th>Amount</th>
+                <th>UTR / Ref ID</th>
+                <th>Status</th>
+            </tr>
+        jsko</thead>
+        <tbody id="transactionTable">
+            <tr>
+                <td colspan="5" style="text-align: center; color: #777;">Wait kar rahe hain notifications ka...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // यहाँ आप अपने Cloudflare Worker या Backend API का GET URL डालेंगे जहाँ से डेटा फेच होगा
+    const API_URL = "https://your-cloudflare-worker.yourdomain.workers.dev/get-payments";
+
+    let totalCollection = 0;
+    let count = 0;
+
+    async function fetchTransactions() {
+        try {
+            let response = await fetch(API_URL);
+            let data = await response.json();
+            
+            // मान लीजिए डेटा एक एरे के रूप में आता है: [{time, name, amount, utr}]
+            if (data && data.length > 0) {
+                let tableBody = document.getElementById("transactionTable");
+                tableBody.innerHTML = "";
+                totalCollection = 0;
+                count = data.length;
+
+                data.forEach(tx => {
+                    totalCollection += Number(tx.amount);
+                    let row = `<tr>
+                        <td>${tx.time}</td>
+                        <td>${tx.name}</td>
+                        <td>₹${tx.amount}</td>
+                        <td>${tx.utr}</td>
+                        <td><span class="status-success">Success</span></td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+
+                document.getElementById("totalAmount").innerText = "₹" + totalCollection;
+                document.getElementById("totalCount").innerText = count;
+            }
+        } catch (error) {
+            console.error("Data fetch karne mein error:", error);
+        }
+    }
+
+    // हर 5 सेकंड में डेटा ऑटो-रिफ्रेश होगा
+    setInterval(fetchTransactions, 5000);
+</script>
+
+</body>
+</html>
